@@ -1,15 +1,15 @@
-import { ethers } from "ethers";
-import fs from "fs";
-import dotenv from "dotenv";
-dotenv.config();
+const { ethers } = require("ethers"); // or: const ethers = require("ethers"); for v6 [web:3][web:8]
+const fs = require("fs"); //[web:7][web:19]
+const dotenv = require("dotenv"); //[web:6][web:12]
+dotenv.config(); //[web:6][web:12]
 
-import { LAUNCHPAD_ABI } from "../frontend/src/services/launchAbi.js";
+const { LAUNCHPAD_ABI } = require("../frontend/src/services/launchAbi.js");
 
 const RPC = process.env.QIE_RPC;
 const LAUNCHPAD_ADDRESS = process.env.LAUNCHPAD_ADDRESS;
 const START_BLOCK = Number(process.env.LAUNCHPAD_START_BLOCK);
 
-const provider = new ethers.JsonRpcProvider(RPC);
+const provider = new ethers.JsonRpcProvider(RPC); //[web:1][web:8]
 
 console.log("Indexer connecting…");
 
@@ -40,7 +40,11 @@ async function main() {
 
     const logs = await provider.getLogs({
       address: LAUNCHPAD_ADDRESS,
-      topics: [ethers.id("Launched(address,address,uint256,uint256,uint256,uint256)")],
+      topics: [
+        ethers.id(
+          "Launched(address,address,uint256,uint256,uint256,uint256)"
+        ),
+      ],
       fromBlock: from,
       toBlock: to,
     });
@@ -61,7 +65,14 @@ async function main() {
     (owner, token, supply, liquidity, months, unlock, event) => {
       console.log("New Launch:", token);
       saveLaunch(
-        { owner, token, totalSupply: supply, liquidityQIE: liquidity, lockMonths: months, unlockTime: unlock },
+        {
+          owner,
+          token,
+          totalSupply: supply,
+          liquidityQIE: liquidity,
+          lockMonths: months,
+          unlockTime: unlock,
+        },
         event.transactionHash
       );
     }
@@ -91,3 +102,4 @@ function saveLaunch(data, txHash) {
 }
 
 main().catch(console.error);
+
