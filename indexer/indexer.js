@@ -3,7 +3,9 @@ const fs = require("fs"); //[web:7][web:19]
 const dotenv = require("dotenv"); //[web:6][web:12]
 dotenv.config(); //[web:6][web:12]
 
-const { LAUNCHPAD_ABI } = require("../frontend/src/services/launchAbi.js");
+//const { LAUNCHPAD_ABI } = require("../frontend/src/services/launchAbi.js");
+const launchpadABI = require("./LaunchPadABI.json");
+
 
 const RPC = process.env.QIE_RPC;
 const LAUNCHPAD_ADDRESS = process.env.LAUNCHPAD_ADDRESS;
