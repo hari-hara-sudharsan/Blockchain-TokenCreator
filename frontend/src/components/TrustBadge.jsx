@@ -1,3 +1,4 @@
+
 import React from "react";
 
 /**
@@ -25,3 +26,21 @@ export default function TrustBadge({ token = {} }) {
     </div>
   );
 }
+
+// frontend/src/components/TrustBadge.jsx
+export default function TrustBadge({ token }) {
+  // logic: green = locked (unlockTime in future + lockMonths >= 6) & trustScore >=2 && no premine
+  const now = Math.floor(Date.now()/1000);
+  const locked = token.unlockTime && Number(token.unlockTime) > now;
+  let color = "bg-yellow-400 text-black";
+  if (locked && token.trustScore >= 2) color = "bg-green-400 text-black";
+  if (token.trustScore === 0) color = "bg-red-500 text-white";
+
+  return (
+    <div className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
+      {locked ? "Locked" : "Unlocked"}
+    </div>
+  );
+}
+
+

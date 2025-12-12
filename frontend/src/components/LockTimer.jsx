@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 export default function LockTimer({ unlockTime }) {
+<<<<<<< HEAD
   const [remaining, setRemaining] = useState(calcRemaining(unlockTime));
 
   useEffect(() => {
@@ -30,4 +31,24 @@ function calcRemaining(unix) {
   t -= hours * (1000 * 60 * 60);
   const minutes = Math.floor(t / (1000 * 60));
   return { total, days, hours, minutes };
+=======
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!unlockTime) return null;
+
+  const diff = unlockTime * 1000 - now;
+  if (diff <= 0) return <div className="text-green-300 font-semibold">Unlocked</div>;
+
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const secs = Math.floor((diff % (1000*60)) / 1000);
+
+  return <div className="text-yellow-300 font-semibold">{days}d {hours}h {mins}m {secs}s</div>;
+>>>>>>> 2dc515a (Updated Mad)
 }

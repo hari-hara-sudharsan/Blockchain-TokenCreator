@@ -4,9 +4,9 @@
     "inputs": [
       { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
       { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "totalSupply", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "liquidityQIE", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "lockMonths", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "supply", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "liquidity", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "months", "type": "uint256" },
       { "indexed": false, "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
     ],
     "name": "Launched",
@@ -14,21 +14,14 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "tokenAddress", "type": "address" }
+      { "internalType": "address", "name": "token", "type": "address" },
+      { "internalType": "uint256", "name": "supply", "type": "uint256" },
+      { "internalType": "uint256", "name": "liquidity", "type": "uint256" },
+      { "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
     ],
-    "name": "getLaunchDetails",
-    "outputs": [
-      { "internalType": "address", "name": "owner", "type": "address" },
-      { "internalType": "address", "name": "tokenAddress", "type": "address" },
-      { "internalType": "uint256", "name": "totalSupply", "type": "uint256" },
-      { "internalType": "uint256", "name": "liquidityQIE", "type": "uint256" },
-      { "internalType": "uint256", "name": "lockMonths", "type": "uint256" },
-      { "internalType": "uint256", "name": "unlockTime", "type": "uint256" },
-      { "internalType": "uint256", "name": "trustScore", "type": "uint256" },
-      { "internalType": "bool", "name": "withdrawn", "type": "bool" },
-      { "internalType": "string", "name": "imageCid", "type": "string" }
-    ],
-    "stateMutability": "view",
+    "name": "emitTestLaunch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

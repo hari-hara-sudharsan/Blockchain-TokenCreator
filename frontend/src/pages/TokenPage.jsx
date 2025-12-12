@@ -221,6 +221,7 @@
 // TokenPage.jsx
 // src/pages/TokenPage.jsx
 // frontend/src/pages/TokenPage.jsx
+<<<<<<< HEAD
 // TokenPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -229,11 +230,18 @@ import LockTimer from "../components/LockTimer";
 import TrustBadge from "../components/TrustBadge";
 import Sparkline from "../components/Sparkline";
 import confetti from "canvas-confetti";
+=======
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getToken } from "../services/indexerApi";
+import TrustBadge from "../components/TrustBadge";
+>>>>>>> 2dc515a (Updated Mad)
 
 export default function TokenPage() {
   const { address } = useParams();
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
 
   async function fetchToken() {
     setLoading(true);
@@ -283,10 +291,26 @@ export default function TokenPage() {
           ? { ...prev, totalSupply: Math.max(1, Math.floor((Number(prev.totalSupply) || 0) * 0.99)) }
           : prev
       );
+=======
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+
+  // auto-burn demo (1% every 5s)
+  useEffect(() => {
+    if (!token) return;
+    const t = setInterval(() => {
+      setToken((tk) => {
+        if (!tk) return tk;
+        return {
+          ...tk,
+          totalSupply: Math.floor(Number(tk.totalSupply) * 0.99),
+        };
+      });
+>>>>>>> 2dc515a (Updated Mad)
     }, 5000);
     return () => clearInterval(t);
   }, [token]);
 
+<<<<<<< HEAD
   if (loading) return <div className="loader">Loading token…</div>;
   if (!token) return <div className="empty">Token not found</div>;
 
@@ -355,10 +379,130 @@ export default function TokenPage() {
             >
               Share X
             </a>
+=======
+  // tick every second for lock countdown
+  useEffect(() => {
+    const id = setInterval(() => {
+      setNow(Math.floor(Date.now() / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // initial load
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const data = await getToken(address);
+        if (mounted) setToken(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [address]);
+
+  if (loading) return <div className="p-6">Loading token...</div>;
+  if (!token) return <div className="p-6">Token not found</div>;
+
+  const unlockTs = token.unlockTime || 0;
+  const secondsLeft = Math.max(0, unlockTs - now);
+  const isLocked = secondsLeft > 0;
+
+  const days = Math.floor(secondsLeft / 86400);
+  const hours = Math.floor((secondsLeft % 86400) / 3600);
+  const minutes = Math.floor((secondsLeft % 3600) / 60);
+  const seconds = secondsLeft % 60;
+
+  const hasUnlockTime = !!token.unlockTime;
+  const unlockDateLabel = hasUnlockTime
+    ? new Date(token.unlockTime * 1000).toLocaleString()
+    : "—";
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex gap-6">
+        <div className="w-32 h-32 rounded-xl bg-gray-800 flex items-center justify-center">
+          {token.imageCid ? (
+            <img
+              src={`https://ipfs.io/ipfs/${token.imageCid}`}
+              alt="token"
+              className="w-full h-full object-cover rounded-xl"
+            />
+          ) : (
+            <div className="text-white">
+              {(token.symbol || "TOK").slice(0, 3)}
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1">
+          <h1 className="text-2xl text-white font-bold">
+            {token.name || token.tokenAddress}
+          </h1>
+          <div className="flex items-center gap-3 mt-2">
+            <div className="text-gray-400">Supply: {token.totalSupply}</div>
+            <TrustBadge token={token} />
+            <div className="text-gray-400">
+              Created:{" "}
+              {token.timestamp
+                ? new Date(token.timestamp * 1000).toLocaleString()
+                : "—"}
+            </div>
+          </div>
+
+          {/* Lock countdown + actions */}
+          <div className="mt-6">
+            <div className="text-sm text-cyan-300 mb-2">
+              {hasUnlockTime ? (
+                isLocked ? (
+                  <span>
+                    Locked for{" "}
+                    {days}d {hours}h {minutes}m {seconds}s — unlocks at{" "}
+                    {unlockDateLabel}
+                  </span>
+                ) : (
+                  <span>Unlocked since {unlockDateLabel}</span>
+                )
+              ) : (
+                <span>Lock info unavailable</span>
+              )}
+            </div>
+
+            <button
+              disabled={isLocked}
+              className={`px-4 py-2 rounded-lg ${
+                isLocked
+                  ? "bg-[#222] opacity-50 cursor-not-allowed"
+                  : "bg-[#222] hover:bg-[#333]"
+              }`}
+            >
+              Burn LP {isLocked && "(locked)"}
+            </button>
+
+            <button
+              disabled={isLocked}
+              className={`ml-3 px-4 py-2 rounded-lg ${
+                isLocked
+                  ? "bg-[#444] text-[#aaa] cursor-not-allowed"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }`}
+            >
+              {isLocked
+                ? `Rug Impossible — Locked until ${unlockDateLabel}`
+                : "Danger: Rug LP"}
+            </button>
+>>>>>>> 2dc515a (Updated Mad)
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       <section className="chart">
         <h4>Price Sparkline</h4>
         <Sparkline data={[5, 8, 3, 12, 9, 14, 10]} />
@@ -368,6 +512,17 @@ export default function TokenPage() {
         <h4>Details</h4>
         <pre className="json">{JSON.stringify(token, null, 2)}</pre>
       </section>
+=======
+      <div className="mt-8 bg-[#06070a] p-4 rounded-lg border border-cyan-600/10">
+        <h3 className="text-lg text-cyan-300 font-semibold">
+          Liquidity &amp; Metrics
+        </h3>
+        <div className="mt-3 text-gray-300">
+          Liquidity (QIE): {token.liquidityQIE}
+        </div>
+        <div className="mt-2 text-gray-400">Trust score: {token.trustScore}</div>
+      </div>
+>>>>>>> 2dc515a (Updated Mad)
     </div>
   );
 }

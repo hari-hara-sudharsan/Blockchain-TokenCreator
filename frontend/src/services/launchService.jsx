@@ -29,6 +29,7 @@
 
 // frontend/src/services/launchService.jsx
 // frontend/src/services/launchService.jsx
+<<<<<<< HEAD
 // frontend/src/services/launchService.jsx
 // launchService.jsx
 // launchService.jsx
@@ -43,10 +44,39 @@ import ABI from "../abi/LaunchPadABI.json";
 
 async function postToIndexer(payload) {
   const res = await fetch(`${INDEXER_URL}/tokens`, {
+=======
+import { INDEXER_URL } from "../config";
+
+export async function simulateLaunch(name, symbol, totalSupply, realAsset = false, imageCid = "") {
+  let owner = "0xSIMOWNER";
+
+  try {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      owner = accounts[0] || owner;
+    }
+  } catch (e) {
+    console.warn("Wallet not connected, using SIMOWNER");
+  }
+
+  const payload = {
+    name,
+    symbol,
+    totalSupply: Number(totalSupply) || 1000000,
+    owner,
+    imageCid,
+    realAsset,
+    lockMonths: 6,
+    liquidityQIE: 0.1
+  };
+
+  const res = await fetch(`${INDEXER_URL}/sim-launch`, {
+>>>>>>> 2dc515a (Updated Mad)
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+<<<<<<< HEAD
   return res.json();
 }
 
@@ -57,7 +87,7 @@ export async function launchOnChain({
   unlock
 }) {
   try {
-    if (!window.qieWallet) {
+    if (!window.qiewallet) {
       throw new Error("QIE Wallet not detected");
     }
 
@@ -160,4 +190,10 @@ export async function launchRealToken({ name, symbol, totalSupply, liquidityQIE,
     console.error("Real launch failed:", err);
     return { ok: false, error: err.message };
   }
+=======
+
+  if (!res.ok) throw new Error("Simulation launch failed");
+
+  return await res.json();
+>>>>>>> 2dc515a (Updated Mad)
 }

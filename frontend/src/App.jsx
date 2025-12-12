@@ -326,6 +326,7 @@ export default function App() {
 //   );
 // }
 // frontend/src/App.jsx (only core snippet)
+<<<<<<< HEAD
 // App.jsx
 import React, { useState } from "react";
 import { Routes, Route } from "react-router-dom";
@@ -349,10 +350,33 @@ export default function App() {
 
       {launchOpen && <LaunchModal onClose={() => setLaunchOpen(false)} />}
     </div>
+=======
+import { Routes, Route } from "react-router-dom";
+import NavBar from "./components/NavBar";
+import TokenList from "./pages/TokenList";
+import LaunchModal from "./components/LaunchModal";
+import TokenPage from "./pages/TokenPage";
+
+export default function App() {
+  return (
+    <>
+     
+      <Routes>
+  <Route path="/" element={<TokenList />} />
+  <Route path="/launch" element={<LaunchModal />} />
+  <Route path="/token/:address" element={<TokenPage />} />
+</Routes>
+    </>
+>>>>>>> 2dc515a (Updated Mad)
   );
 }
 
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 2dc515a (Updated Mad)
 /*
 
 import { useState } from 'react'

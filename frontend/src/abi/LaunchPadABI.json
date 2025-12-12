@@ -1,5 +1,6 @@
 [
   {
+<<<<<<< HEAD
     "anonymous": false,
     "inputs": [
       { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
@@ -24,3 +25,10 @@
     "type": "function"
   }
 ]
+=======
+    "inputs": [],
+    "name": "launchFairToken",
+    "type": "function"
+  }
+]
+>>>>>>> 2dc515a (Updated Mad)

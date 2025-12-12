@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 
 export default function NavBar({ onOpenLaunch }) {
@@ -47,3 +48,32 @@ export default function NavBar({ onOpenLaunch }) {
     </nav>
   );
 }
+=======
+import { useNavigate } from "react-router-dom";
+
+export default function NavBar() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="w-full flex justify-between items-center px-6 py-4 bg-black/40 border-b border-cyan-500/10">
+      <h1 className="text-xl font-bold text-cyan-300">SafeMint</h1>
+
+      <div className="flex gap-4">
+        <button
+          onClick={() => navigate("/launch")}
+          className="px-4 py-2 bg-cyan-500 text-black rounded-lg font-semibold"
+        >
+          Launch Token
+        </button>
+
+        <button
+          onClick={() => window.ethereum?.request({ method: "eth_requestAccounts" })}
+          className="px-4 py-2 bg-gray-700 text-cyan-300 rounded-lg"
+        >
+          Connect Wallet
+        </button>
+      </div>
+    </div>
+  );
+}
+>>>>>>> 2dc515a (Updated Mad)

@@ -129,127 +129,137 @@
 // server.js
 // server.js — REST API
 // indexer/server.js
+// indexer/server.js
+// indexer/server.js
+// server.js - FULL WORKING VERSION FOR PHASE 1
+// indexer/server.js
+// indexer/server.js
 const express = require("express");
 const fs = require("fs");
+const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
-const path = require("path");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const DB = path.join(__dirname, "db.json");
+const DB_PATH = path.join(__dirname, "db.json");
 const ADMIN_KEY = process.env.INDEXER_ADMIN_KEY || "";
 
-// Ensure DB file exists
-function ensureDB() {
-  if (!fs.existsSync(DB)) {
-    fs.writeFileSync(DB, JSON.stringify({ tokens: [] }, null, 2));
-  }
-}
-
-// Safely read JSON, handling empty or corrupted files
 function readDB() {
-  ensureDB();
   try {
-    const raw = fs.readFileSync(DB, "utf8");
-    if (!raw.trim()) {
-      // Empty file -> reinit
-      fs.writeFileSync(DB, JSON.stringify({ tokens: [] }, null, 2));
-      return { tokens: [] };
+    if (!fs.existsSync(DB_PATH)) {
+      fs.writeFileSync(DB_PATH, JSON.stringify({ tokens: [] }, null, 2), "utf8");
     }
+    const raw = fs.readFileSync(DB_PATH, "utf8");
+    if (!raw) return { tokens: [] };
     return JSON.parse(raw);
-  } catch (e) {
-    console.warn("DB JSON parse error, reinitializing:", e);
-    fs.writeFileSync(DB, JSON.stringify({ tokens: [] }, null, 2));
+  } catch (err) {
+    console.error("DB READ ERROR:", err);
     return { tokens: [] };
   }
 }
 
 function writeDB(data) {
-  fs.writeFileSync(DB, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), {
+      encoding: "utf-8",
+      flag: "w"
+    });
+  } catch (err) {
+    console.error("DB WRITE ERROR:", err);
+  }
 }
 
-// List all tokens
-app.get("/tokens", (req, res) => {
+// simple in-memory cache
+let tokensCache = null;
+let tokensCacheTs = 0;
+function getCachedTokens() {
+  if (tokensCache && (Date.now() - tokensCacheTs) < 5000) return tokensCache;
   const db = readDB();
-  res.json(db.tokens || []);
+  tokensCache = db.tokens || [];
+  tokensCacheTs = Date.now();
+  return tokensCache;
+}
+
+/* ----------------- ROUTES ----------------- */
+
+app.get("/health", (req, res) => res.json({ ok: true }));
+
+app.get("/tokens", (req, res) => {
+  return res.json(getCachedTokens());
 });
 
-// Get token by address
 app.get("/tokens/:address", (req, res) => {
   const addr = (req.params.address || "").toLowerCase();
-  const db = readDB();
-  const token = (db.tokens || []).find(
-    (t) => (t.tokenAddress || "").toLowerCase() === addr
-  );
-  if (!token) return res.status(404).json({ error: "Not found" });
-  res.json(token);
+  const t = getCachedTokens().find(x => (x.tokenAddress || x.address || "").toLowerCase() === addr);
+  if (!t) return res.status(404).json({ error: "Token not found" });
+  return res.json(t);
 });
 
-/**
- * Simulation endpoint: simulates a blockchain launch.
- * frontend calls /sim-launch to add token to db and returns tokenAddress
- */
-app.post("/sim-launch", (req, res) => {
-  const incoming = req.body || {};
-  const db = readDB();
+app.post("/tokens", (req, res) => {
+  try {
+    const db = readDB();
+    const token = req.body;
+    if (!token || !token.tokenAddress) return res.status(400).json({ error: "missing tokenAddress" });
 
-  const now = Math.floor(Date.now() / 1000);
+    if (!db.tokens) db.tokens = [];
 
-  // generate fake address stable-ish
-  const tokenAddress = "0xSIM" + Math.random().toString(16).slice(2, 10);
-
-  const token = {
-    owner: incoming.owner || "0xSIMOWNER",
-    tokenAddress,
-    name: incoming.name || "SimToken",
-    symbol: incoming.symbol || "SIM",
-    totalSupply: String(incoming.totalSupply || 1000000),
-    liquidityQIE: incoming.liquidityQIE || 0.1,
-    lockMonths: incoming.lockMonths || 6,
-    unlockTime:
-      Number(incoming.unlockTime) ||
-      now + (incoming.lockMonths || 6) * 30 * 86400,
-    trustScore: 3,
-    imageCid: incoming.imageCid || "",
-    realAsset: !!incoming.realAsset,
-    createdAt: now,
-    // extra demo fields if you still want them
-    timestamp: now,
-    priceHistory: [5, 10, 8, 12, 9, 14],
-    price: 6.5,
-  };
-
-  db.tokens = db.tokens || [];
-  db.tokens.unshift(token);
-  writeDB(db);
-
-  console.log("Simulated new launch:", tokenAddress);
-  res.json({ ok: true, tokenAddress, token });
+    const exists = db.tokens.find(t => (t.tokenAddress || "").toLowerCase() === token.tokenAddress.toLowerCase());
+    if (!exists) {
+      db.tokens.push(token);
+      writeDB(db);
+      // invalidate cache
+      tokensCache = null;
+      console.log("Saved token:", token.tokenAddress);
+      return res.json({ ok: true, saved: token.tokenAddress });
+    } else {
+      Object.assign(exists, token);
+      writeDB(db);
+      tokensCache = null;
+      console.log("Updated token:", token.tokenAddress);
+      return res.json({ ok: true, updated: token.tokenAddress });
+    }
+  } catch (err) {
+    console.error("POST /tokens failed:", err);
+    res.status(500).json({ error: "Save failed" });
+  }
 });
 
-/* optional admin action: mark withdraw */
 app.post("/tokens/:address/withdraw", (req, res) => {
   const key = req.headers["x-admin-key"] || "";
-  if (ADMIN_KEY && key !== ADMIN_KEY)
-    return res.status(403).json({ error: "invalid admin key" });
+  if (ADMIN_KEY && key !== ADMIN_KEY) {
+    return res.status(403).json({ error: "Invalid admin key" });
+  }
 
   const addr = (req.params.address || "").toLowerCase();
   const db = readDB();
-  const idx = (db.tokens || []).findIndex(
-    (t) => (t.tokenAddress || "").toLowerCase() === addr
-  );
-  if (idx === -1) return res.status(404).json({ error: "not found" });
-
+  const idx = (db.tokens || []).findIndex(t => (t.tokenAddress || "").toLowerCase() === addr);
+  if (idx === -1) return res.status(404).json({ error: "Token not found" });
   db.tokens[idx].withdrawn = true;
   db.tokens[idx].withdrawnAt = Math.floor(Date.now() / 1000);
   writeDB(db);
-  res.json({ ok: true });
+  tokensCache = null;
+  return res.json({ ok: true });
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log("Indexer running on port", PORT));
+app.post("/refer/:token", (req, res) => {
+  try {
+    const db = readDB();
+    const tokenAddress = (req.params.token || "").toLowerCase();
+    const t = (db.tokens || []).find(x => (x.tokenAddress || "").toLowerCase() === tokenAddress);
+    if (!t) return res.status(404).json({ error: "Token not found" });
+    t.referrals = (t.referrals || 0) + 1;
+    writeDB(db);
+    tokensCache = null;
+    return res.json({ ok: true, referrals: t.referrals });
+  } catch (err) {
+    console.error("POST /refer failed:", err);
+    res.status(500).json({ error: "failed" });
+  }
+});
 
-module.exports = app;
+/* ----------------- SERVER START ----------------- */
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`Indexer running on port ${PORT}`));

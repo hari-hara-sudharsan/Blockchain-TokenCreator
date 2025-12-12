@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// frontend/src/main.jsx
+>>>>>>> 2dc515a (Updated Mad)
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

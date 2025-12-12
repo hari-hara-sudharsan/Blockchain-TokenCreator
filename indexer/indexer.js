@@ -104,112 +104,182 @@
 
 // indexer/indexer.js
 // indexer/indexer.js
-const fs = require("fs");
+// indexer/indexer.js
 const { ethers } = require("ethers");
+const fs = require("fs");
+const path = require("path");
+const { generateOHLC } = require("./priceEngine"); 
 require("dotenv").config();
 
-const DB_FILE = "./db.json";
-const DEMO_MODE = process.env.DEMO_MODE === "true";
-const RPC = process.env.QIE_RPC || "";
-const LAUNCHPAD_ADDRESS = process.env.LAUNCHPAD_ADDRESS || "";
-const START_BLOCK = Number(process.env.LAUNCHPAD_START_BLOCK || 0);
 
-// Ensure DB file exists
-function ensureDB() {
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify({ tokens: [] }, null, 2));
-  }
-}
+const LAUNCHPAD_ABI = require("./LaunchPadABI.json"); // we'll provide this file
+const LAUNCHPAD_ADDRESS = process.env.LAUNCHPAD_ADDRESS;
+const RPC = process.env.QIE_RPC || process.env.RPC || "https://rpc1testnet.qie.digital";
+const START_BLOCK = Number(process.env.LAUNCHPAD_START_BLOCK) || 0;
+const DB_PATH = path.join(__dirname, "db.json");
 
-// Safe read: handle empty / corrupted JSON
 function readDB() {
-  ensureDB();
   try {
-    const raw = fs.readFileSync(DB_FILE, "utf8");
-    if (!raw.trim()) {
-      fs.writeFileSync(DB_FILE, JSON.stringify({ tokens: [] }, null, 2));
-      return { tokens: [] };
+    if (!fs.existsSync(DB_PATH)) {
+      fs.writeFileSync(DB_PATH, JSON.stringify({ tokens: [] }, null, 2), "utf8");
     }
-    return JSON.parse(raw);
+    const raw = fs.readFileSync(DB_PATH, "utf8");
+    return raw ? JSON.parse(raw) : { tokens: [] };
   } catch (e) {
-    console.warn("DB JSON parse error in indexer, reinitializing:", e);
-    fs.writeFileSync(DB_FILE, JSON.stringify({ tokens: [] }, null, 2));
+    console.error("readDB error", e);
     return { tokens: [] };
   }
 }
 
 function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), { encoding: "utf-8", flag: "w" });
+  } catch (err) {
+    console.error("DB WRITE ERROR:", err);
+  }
 }
 
-// Seed demo tokens (simulation mode)
-async function seedDemo() {
+console.log("Starting Indexer…");
+console.log("ENV CHECK:", { RPC, LAUNCHPAD_ADDRESS, START_BLOCK });
+
+async function seedDemoTokens() {
   const db = readDB();
-  if ((db.tokens || []).length > 0) return;
-
-  const now = Math.floor(Date.now() / 1000);
-  const demo = [];
-
-  for (let i = 0; i < 6; i++) {
-    const addr = "0xSIM" + Math.random().toString(16).slice(2, 8);
-    demo.push({
-      owner: `0xSIMOWNER${i}`,
-      tokenAddress: addr,
-      name: `SIM-${i}`,
-      symbol: `S${i}`,
-      totalSupply: String(1_000_000),
-      liquidityQIE: 10,
-      lockMonths: 6,
-      unlockTime: now + 6 * 30 * 86400,
-      trustScore: 2,
-      imageCid: "",
-      createdAt: now - i * 86400,
-    });
-    console.log("Saved token:", addr);
+  if (!db.tokens || db.tokens.length === 0) {
+    db.tokens = db.tokens || [];
+    for (let i = 1; i <= 5; i++) {
+      const addr = "0xSIM" + Math.random().toString(16).slice(2, 8);
+      const t = {
+        tokenAddress: addr,
+        name: `SIM-${i}`,
+        symbol: `SIM${i}`,
+        owner: "0xSIMOWNER",
+        totalSupply: 1000000,
+        liquidityQIE: Math.floor(Math.random() * 500) + 10,
+        lockMonths: 6,
+        unlockTime: Math.floor(Date.now() / 1000) + 6 * 30 * 86400,
+        trustScore: 2,
+        imageCid: "",
+        timestamp: Math.floor(Date.now() / 1000)
+      };
+      db.tokens.push(t);
+      console.log("Simulated new launch:", addr);
+    }
+    writeDB(db);
   }
-
-  db.tokens = demo;
-  writeDB(db);
-  console.log("Seeding demo tokens (simulation mode)...");
 }
 
-// Main indexer start
-async function startIndexer() {
-  ensureDB();
-
-  // DEMO_MODE flag takes precedence
-  if (DEMO_MODE) {
-    console.log("DEMO_MODE active. Not connecting to RPC.");
-    await seedDemo();
-    console.log("Indexer running in simulation mode.");
-    return;
-  }
-
-  // If no RPC configured, also go simulation
-  if (!RPC) {
-    console.log("No RPC configured — running in simulation mode.");
-    await seedDemo();
-    return;
-  }
-
-  let provider = null;
+async function main() {
+  // attempt provider
+  let provider;
   try {
     provider = new ethers.JsonRpcProvider(RPC);
-    await provider.getNetwork();
+    // test network; if fails will throw
+    await provider.getBlockNumber();
     console.log("Connected to RPC — running live indexer.");
-    // TODO: implement real log scanning here using LAUNCHPAD_ADDRESS / START_BLOCK
-    // For now, you can still seed some demo if db is empty
-    await seedDemo();
+  } catch (err) {
+    console.warn("RPC connect failed, running in simulation-only mode. Error:", err && err.message);
+    await seedDemoTokens();
+    console.log("Seeded demo tokens (simulation mode)...");
+    return;
+  }
+
+  // We have provider -> attempt to attach to contract
+  if (!LAUNCHPAD_ADDRESS) {
+    console.warn("No LAUNCHPAD_ADDRESS set — seeding demo tokens only.");
+    await seedDemoTokens();
+    return;
+  }
+
+  const contract = new ethers.Contract(LAUNCHPAD_ADDRESS, LAUNCHPAD_ABI, provider);
+
+  // fetch past logs starting from START_BLOCK in batches (if START_BLOCK > 0)
+  try {
+    const latest = await provider.getBlockNumber();
+    let from = START_BLOCK || 0;
+    console.log("Listening from block:", from);
+
+    while (from <= latest) {
+      const to = Math.min(from + 5000, latest);
+      console.log(`Fetching logs: ${from} → ${to}`);
+      try {
+        const logs = await provider.getLogs({
+          address: LAUNCHPAD_ADDRESS,
+          topics: [ethers.id("Launched(address,address,uint256,uint256,uint256,uint256)")],
+          fromBlock: from,
+          toBlock: to
+        });
+        for (const log of logs) {
+          try {
+            const parsed = contract.interface.parseLog(log);
+            const args = parsed.args;
+            saveLaunch({
+              owner: args.owner,
+              token: args.token,
+              totalSupply: args.supply?.toString?.() || args.totalSupply?.toString?.(),
+              liquidityQIE: args.liquidity?.toString?.(),
+              lockMonths: args.months || 0,
+              unlockTime: Number(args.unlockTime || args.unlock || 0),
+            }, log.transactionHash);
+          } catch (e) {
+            // ignore parse errors
+          }
+        }
+      } catch (e) {
+        // sometimes provider returns HTML (blocked); just break and rely on listener
+        console.warn("Warning: fetching logs failed:", e.message || e);
+      }
+      from = to + 1;
+    }
   } catch (e) {
-    console.warn(
-      "RPC unreachable, entering simulation/hybrid mode.",
-      e.message || e
-    );
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-    await seedDemo();
+    console.warn("Error while fetching past logs:", e);
+  }
+
+  // realtime
+  try {
+    contract.on("Launched", (owner, token, supply, liquidity, months, unlockTime, event) => {
+      console.log("New Launch event:", token);
+      saveLaunch({
+        owner, token, totalSupply: supply?.toString?.(), liquidityQIE: liquidity?.toString?.(),
+        lockMonths: months, unlockTime: Number(unlockTime)
+      }, event.transactionHash);
+    });
+    console.log("Indexer realtime listener attached.");
+  } catch (e) {
+    console.error("Failed to attach event listener:", e);
   }
 }
 
-startIndexer();
+function saveLaunch(data, txHash) {
+  const db = readDB();
+  db.tokens = db.tokens || [];
+  const tokenAddr = (data.token || data.tokenAddress || "").toLowerCase();
+  const exists = db.tokens.find(x => (x.tokenAddress || "").toLowerCase() === tokenAddr);
+  if (exists) return;
+  const tokenObj = {
+    tokenAddress: data.token || data.tokenAddress,
+    owner: data.owner || "",
+    totalSupply: data.totalSupply || "0",
+    liquidityQIE: data.liquidityQIE || "0",
+    lockMonths: data.lockMonths || 0,
+    unlockTime: Number(data.unlockTime) || Math.floor(Date.now() / 1000) + 6 * 30 * 86400,
+    trustScore: 2,
+    creationTx: txHash,
+    timestamp: Math.floor(Date.now() / 1000),
+    // 👇 THESE 3 LINES ONLY ADDED:
+    priceHistory: generateOHLC(1, 40),
+    volatility: Math.random() * 0.3,
+    growth: (Math.random() * 200 - 50).toFixed(2) // -50% to +150%
+    // 👆 END OF ADDED LINES
+  };
+  db.tokens.push(tokenObj);
+  writeDB(db);
+  console.log("Saved Token:", tokenObj.tokenAddress);
+}
 
-module.exports = { readDB, writeDB, seedDemo };
+
+/* run */
+main().catch(async (err) => {
+  console.error("Indexer startup error:", err);
+  // Seed demo tokens so UI still works
+  await seedDemoTokens();
+});

@@ -1,11 +1,19 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 import TokenCard from "../components/TokenCard";
 import { INDEXER_URL } from "../config";
+=======
+// frontend/src/pages/TokenList.jsx
+import { useEffect, useState } from "react";
+import TokenCard from "../components/TokenCard";
+import { getAllTokens } from "../services/indexerApi";
+>>>>>>> 2dc515a (Updated Mad)
 
 export default function TokenList() {
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
 
+<<<<<<< HEAD
   function getCache(key) {
     try {
       const item = localStorage.getItem(key);
@@ -71,3 +79,30 @@ export default function TokenList() {
     </div>
   );
 }
+=======
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const items = await getAllTokens();
+        if (mounted) setTokens(items);
+      } catch(e) {
+        console.error(e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return ()=> mounted = false;
+  },[]);
+
+  if (loading) return <div className="p-6">Loading tokens...</div>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-6">
+      {tokens.map(t => <TokenCard token={t} key={t.tokenAddress} />)}
+    </div>
+  );
+}
+
+>>>>>>> 2dc515a (Updated Mad)

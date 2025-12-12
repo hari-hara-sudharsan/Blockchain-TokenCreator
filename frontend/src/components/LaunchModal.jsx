@@ -215,6 +215,7 @@
 // LaunchModal.jsx
 // src/components/LaunchModal.jsx
 // frontend/src/components/LaunchModal.jsx
+<<<<<<< HEAD
 // LaunchModal.jsx
 // LaunchModal.jsx
 import React, { useState } from "react";
@@ -282,10 +283,43 @@ export default function LaunchModal({ onClose }) {
       alert("Launch failed: " + (err?.message || "unknown"));
     } finally {
       setLoading(false);
+=======
+import { useState } from "react";
+import confetti from "canvas-confetti";
+import { simulateLaunch } from "../services/launchService";
+import { useNavigate } from "react-router-dom";
+
+export default function LaunchModal({ onClose }) {
+  const nav = useNavigate();
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
+  const [supply, setSupply] = useState("1000000");
+  const [realAsset, setRealAsset] = useState(false);
+  const [step, setStep] = useState("form");
+  const [error, setError] = useState("");
+
+  async function launch() {
+    setError("");
+    try {
+      setStep("sending");
+      const res = await simulateLaunch(name, symbol, supply, realAsset, "");
+      // burst confetti
+      confetti({ particleCount: 160, spread: 100, scalar: 1.2 });
+      setStep("success");
+      // slight delay so user sees success then navigate
+      setTimeout(() => {
+        nav(`/token/${res.tokenAddress}`);
+        onClose && onClose();
+      }, 900);
+    } catch (e) {
+      setError(String(e));
+      setStep("form");
+>>>>>>> 2dc515a (Updated Mad)
     }
   }
 
   return (
+<<<<<<< HEAD
     <div className="modal-backdrop" onClick={() => onClose?.()}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {step === "form" && (
@@ -315,14 +349,49 @@ export default function LaunchModal({ onClose }) {
               <button className="btn" onClick={handleLaunch} disabled={loading}>
                 {loading ? "Launching…" : "Launch & Lock"}
               </button>
+=======
+    <div className="launch-modal fixed inset-0 flex items-center justify-center z-50">
+      <div className="w-[440px] bg-gradient-to-bl from-[#071428]/90 to-[#0b0b0b]/80 p-6 rounded-2xl border border-cyan-600/30 shadow-2xl">
+        {step === "form" && (
+          <>
+            <h2 className="text-2xl font-bold text-cyan-300 mb-4">🚀 Launch Fair Token</h2>
+
+            <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Token Name" className="w-full p-3 rounded-lg mb-3 bg-[#0f1112] border border-gray-700"/>
+            <input value={symbol} onChange={(e)=>setSymbol(e.target.value)} placeholder="Symbol" className="w-full p-3 rounded-lg mb-3 bg-[#0f1112] border border-gray-700"/>
+            <input value={supply} onChange={(e)=>setSupply(e.target.value)} placeholder="Total Supply" className="w-full p-3 rounded-lg mb-3 bg-[#0f1112] border border-gray-700"/>
+
+            <label className="flex items-center gap-2 mb-4 text-gray-300">
+              <input type="checkbox" checked={realAsset} onChange={() => setRealAsset(!realAsset)} />
+              Real Asset Mode
+            </label>
+
+            {error && <div className="text-red-400 mb-2">{error}</div>}
+
+            <div className="flex gap-3">
+              <button onClick={launch} className="flex-1 py-3 rounded-lg bg-gradient-to-r from-[#00f2ff] to-[#00ffa6] text-black font-semibold">Launch & Lock Liquidity</button>
+              <button onClick={() => onClose && onClose()} className="py-3 px-4 rounded-lg bg-transparent border border-gray-700 text-gray-300">Cancel</button>
+>>>>>>> 2dc515a (Updated Mad)
             </div>
           </>
         )}
 
+<<<<<<< HEAD
         {step === "success" && (
           <div className="success">
             <h3>🎉 Launched!</h3>
             <p>Redirecting to token page…</p>
+=======
+        {step === "sending" && (
+          <div className="text-center py-8">
+            <div className="animate-pulse text-gray-400">Sending transaction... (simulated)</div>
+          </div>
+        )}
+
+        {step === "success" && (
+          <div className="text-center py-8">
+            <h3 className="text-2xl text-cyan-300">🎉 Token Successfully Launched</h3>
+            <p className="text-gray-400 mt-2">Your liquidity is locked. Redirecting to token...</p>
+>>>>>>> 2dc515a (Updated Mad)
           </div>
         )}
       </div>
