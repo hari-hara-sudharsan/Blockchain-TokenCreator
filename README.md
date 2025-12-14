@@ -106,7 +106,7 @@ Make sure you have:
 - Node.js **v18 or above**
 - npm
 - Git
-- Modern browser (Chrome / Edge)
+- Docker
 
 ---
 
@@ -115,8 +115,7 @@ Make sure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd qiedex
+git clone (https://github.com/hari-hara-sudharsan/Blockchain-TokenCreator.git)
 ````
 
 ---
@@ -124,15 +123,17 @@ cd qiedex
 ### 2. Install Backend Dependencies
 
 ```bash
-cd backend
+cd indexer
 npm install
-npm run dev
+node index.js
 ```
 
 Backend runs on:
 
 ```
-http://localhost:5000
+http://localhost:4000
+http://localhost:4000/token [for real time tokens]
+http://localhost:4000/token/{0Xaddress} [token details for a particular user]
 ```
 
 ---
@@ -151,6 +152,18 @@ Frontend runs on:
 
 ```
 http://localhost:5173
+```
+
+
+### 4.Contracts
+
+Open a new terminal:
+
+```bash
+cd contract
+npx hardhat compile
+npx hardhat run scripts/deploy-factory.js --network qie_testnet
+
 ```
 
 ---
