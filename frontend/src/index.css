@@ -1,22 +1,28 @@
 /* =========================================================
-   GLOBAL THEME TOKENS (SINGLE SOURCE OF TRUTH)
+   1. DESIGN TOKENS (GLOBAL THEME)
    ========================================================= */
 :root {
-  --bg-main: #020617;
-  --bg-elevated: #020617;
+  /* Backgrounds */
+  --bg-main: #fff5ed;        /* MetaMask beige */
+  --bg-surface: #ffffff;    /* Cards */
+  --bg-dark: #0f0f0f;
 
-  --border-subtle: rgba(148, 163, 184, 0.15);
-  --border-hover: rgba(148, 163, 184, 0.3);
+  /* Text */
+  --text-main: #0f0f0f;
+  --text-muted: #6b7280;
+  --text-invert: #ffffff;
 
-  --text-main: #e5e7eb;
-  --text-strong: #f8fafc;
-  --text-muted: #94a3b8;
+  /* Borders */
+  --border-light: rgba(0, 0, 0, 0.08);
 
-  --accent-primary: #22c55e; /* green = trust */
+  /* Status colors */
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
 }
 
 /* =========================================================
-   GLOBAL RESET
+   2. GLOBAL RESET
    ========================================================= */
 * {
   margin: 0;
@@ -33,188 +39,310 @@ body,
 body {
   background: var(--bg-main);
   color: var(--text-main);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
 }
 
 /* =========================================================
-   NAVBAR
+   3. NAVBAR (GLOBAL)
    ========================================================= */
 .nav {
   height: 64px;
-  padding: 0 24px;
-  background: rgba(2, 6, 23, 0.95);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 32px;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border-light);
+
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: 0.4px;
-  color: var(--text-strong);
+  letter-spacing: -0.3px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
 }
 
 .nav-links a {
-  margin: 0 14px;
-  color: var(--text-muted);
   text-decoration: none;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 .nav-links a:hover {
   color: var(--text-main);
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-.btn {
-  background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  padding: 8px 16px;
-  border-radius: 999px;
+.nav-links a.active {
   color: var(--text-main);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, border 0.2s ease;
+  border-bottom: 2px solid var(--text-main);
+  padding-bottom: 4px;
 }
 
-.btn:hover {
-  background: #020617;
-  border-color: var(--border-hover);
-}
-
-/* =========================================================
-   HEADINGS
-   ========================================================= */
-h2 {
-  margin: 32px 24px 16px;
-  font-size: 20px;
+.btn {
+  background: var(--bg-dark);
+  color: var(--text-invert);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 999px;
   font-weight: 700;
-  color: var(--text-strong);
+  cursor: pointer;
 }
 
 /* =========================================================
-   PAGE WRAPPER
+   4. PAGE WRAPPER (ALL PAGES)
    ========================================================= */
 .page {
-  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 32px;
+}
+
+h2 {
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 32px;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 24px;
 }
 
 /* =========================================================
-   TOKEN GRID
+   5. HOME PAGE (LIVE LAUNCHES)
    ========================================================= */
-.token-row {
+.token-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-  padding: 0 24px 32px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
 }
 
-/* =========================================================
-   TOKEN CARD
-   ========================================================= */
 .token-card {
-  background: var(--bg-elevated);
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 24px;
   cursor: pointer;
-  transition: transform 0.15s ease, border 0.15s ease;
+  transition: transform 0.2s ease;
 }
 
 .token-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-hover);
+  transform: translateY(-4px);
 }
 
 .token-card h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--text-strong);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
 }
 
-.token-card p {
+.liquidity {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* =========================================================
+   6. VALIDATORS PAGE
+   ========================================================= */
+.validator-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.validator-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.validator-card h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+/* =========================================================
+   7. GOVERNANCE PAGE
+   ========================================================= */
+.proposal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.proposal-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.proposal-card h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.vote-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eee;
+  margin-bottom: 12px;
+}
+
+.vote.yes {
+  background: var(--green);
+}
+
+.vote.no {
+  background: var(--red);
+}
+
+.proposal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vote-text {
   font-size: 13px;
   color: var(--text-muted);
 }
 
 /* =========================================================
-   TRUST BADGES
+   8. STATUS / TRUST BADGES (USED EVERYWHERE)
    ========================================================= */
-.trust {
+.trust,
+.status {
   display: inline-block;
-  margin-top: 10px;
-  padding: 4px 10px;
+  padding: 6px 14px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.trust.green {
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--accent-primary);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-}
-
-/* =========================================================
-   VALIDATOR GRID
-   ========================================================= */
-.validator-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-  padding: 0 24px 32px;
-}
-
-/* =========================================================
-   VALIDATOR CARD
-   ========================================================= */
-.validator-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  padding: 16px;
-  transition: border 0.2s ease, transform 0.2s ease;
-}
-
-.validator-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent-primary);
-}
-
-.validator-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.validator-header h3 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-main);
-  text-transform: lowercase;
-}
-
-.validator-stats {
-  display: flex;
-  justify-content: space-between;
-}
-
-.validator-stats .label {
-  display: block;
   font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 2px;
+  font-weight: 800;
 }
 
-.validator-stats .value {
+.trust.green,
+.status.passed {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+}
+
+.trust.yellow,
+.status.active {
+  background: rgba(234, 179, 8, 0.15);
+  color: var(--yellow);
+}
+
+.trust.red,
+.status.rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+}
+
+/* =========================================================
+   9. TOKEN DETAILS PAGE
+   ========================================================= */
+.trust-box {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0 32px;
+}
+
+.graph-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.graph-card h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+code {
+  background: #f3f4f6;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+/* =========================================================
+   LAUNCH TOKEN – HORIZONTAL FORM
+   ========================================================= */
+.launch-card.horizontal {
+  max-width: 720px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  padding: 32px;
+}
+
+/* Each row = label + input */
+.form-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+/* Label */
+.form-row label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* Input */
+.form-row input {
+  padding: 12px 14px;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  outline: none;
+}
+
+.form-row input:focus {
+  border-color: #000;
+}
+
+/* Button */
+.primary-btn {
+  margin-top: 24px;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* =========================
+   RESPONSIVE FALLBACK
+   ========================= */
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
 }

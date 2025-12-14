@@ -4,14 +4,14 @@ const proposals = [
     title: "Increase Minimum LP Lock to 12 Months",
     yes: 72,
     no: 28,
-    status: "Active",
+    status: "ACTIVE",
   },
   {
     id: 2,
     title: "Enable Community Token Listings",
     yes: 88,
     no: 12,
-    status: "Passed",
+    status: "PASSED",
   },
 ]
 
@@ -20,18 +20,32 @@ export default function Governance() {
     <div className="page">
       <h2>🏛 Governance</h2>
 
-      <div className="proposal-list">
+      <div className="proposal-grid">
         {proposals.map((p) => (
           <div key={p.id} className="proposal-card">
             <h3>{p.title}</h3>
 
+            {/* Vote bar */}
             <div className="vote-bar">
-              <div style={{ width: `${p.yes}%` }} className="yes" />
-              <div style={{ width: `${p.no}%` }} className="no" />
+              <div
+                className="vote yes"
+                style={{ width: `${p.yes}%` }}
+              />
+              <div
+                className="vote no"
+                style={{ width: `${p.no}%` }}
+              />
             </div>
 
-            <p>YES: {p.yes}% | NO: {p.no}%</p>
-            <span className="badge">{p.status}</span>
+            <div className="proposal-footer">
+              <span className="vote-text">
+                YES: {p.yes}% &nbsp;|&nbsp; NO: {p.no}%
+              </span>
+
+              <span className={`status ${p.status.toLowerCase()}`}>
+                {p.status}
+              </span>
+            </div>
           </div>
         ))}
       </div>

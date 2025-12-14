@@ -28,9 +28,9 @@ export default function TokenDetails() {
 
       {/* Trust Info */}
       <div className="trust-box">
-        <div className="trust-item green">🔒 LP Locked</div>
-        <div className="trust-item green">🚫 No Mint Authority</div>
-        <div className="trust-item green">🗳 Governance Enabled</div>
+        <div className="trust-item green">LP Locked</div>
+        <div className="trust-item green">No Mint Authority</div>
+        <div className="trust-item green">Governance Enabled</div>
       </div>
 
       {/* Graph */}
