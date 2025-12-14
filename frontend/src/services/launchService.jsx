@@ -1,18 +1,93 @@
-// import { INDEXER_URL } from "../config";
+// // frontend/src/services/launchService.jsx
+// import { INDEXER_URL, FACTORY_ADDRESS, FACTORY_ABI } from "../config";
 
-// export async function launchFairToken(data) {
-//   // generate fake token address
+// /**
+//  * helper: ask injected wallet for signer (QIE Wallet / window.ethereum)
+//  */
+// export async function getSignerProvider() {
+//   if (window.ethereum) {
+//     const { ethers } = await import("ethers");
+//     const provider = new ethers.BrowserProvider(window.ethereum);
+//     await provider.send("eth_requestAccounts", []);
+//     const signer = await provider.getSigner();
+//     return { provider, signer };
+//   }
+//   return null;
+// }
+
+// /**
+//  * Try to launch on-chain using your factory contract.
+//  * Expects FACTORY_ADDRESS and FACTORY_ABI defined in config.
+//  * Returns { tokenAddress, txHash, ... } on success.
+//  */
+// export async function launchOnChain({ tokenAddress, supply, liquidity, unlock }) {
+//   // require wallet
+//   if (!window.ethereum) throw new Error("QIE Wallet not detected");
+//   const { ethers } = await import("ethers");
+//   const provider = new ethers.BrowserProvider(window.ethereum);
+//   await provider.send("eth_requestAccounts", []);
+//   const signer = await provider.getSigner();
+
+//   if (!FACTORY_ADDRESS || !FACTORY_ABI) throw new Error("Factory config missing");
+
+//   const factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
+
+//   // IMPORTANT: your factory method name — if you deployed a real factory, change method below
+//   let tx;
+//   try {
+//     if (typeof factory.launch === "function") {
+//       tx = await factory.launch(tokenAddress, supply, liquidity, unlock);
+//     } else if (typeof factory.createLaunch === "function") {
+//       tx = await factory.createLaunch(tokenAddress, supply, liquidity, unlock);
+//     } else if (typeof factory.emitTestLaunch === "function") {
+//       tx = await factory.emitTestLaunch(tokenAddress, supply, liquidity, unlock);
+//     } else {
+//       throw new Error("No known factory method found: expected launch/createLaunch/emitTestLaunch");
+//     }
+//     const receipt = await tx.wait();
+//     // attempt to parse events for Launched event
+//     const evt = receipt.events?.find(e => e.event === "Launched");
+//     let parsed = {};
+//     if (evt) {
+//       parsed = {
+//         tokenAddress: evt.args?.token || tokenAddress,
+//         owner: evt.args?.owner,
+//         totalSupply: Number(evt.args?.supply || supply),
+//         liquidityQIE: Number(evt.args?.liquidity || liquidity),
+//         unlockTime: Number(evt.args?.unlock || unlock),
+//         txHash: receipt.transactionHash
+//       };
+//     } else {
+//       parsed = { 
+//         tokenAddress, 
+//         txHash: receipt.transactionHash, 
+//         totalSupply: supply, 
+//         liquidityQIE: liquidity, 
+//         unlockTime: unlock 
+//       };
+//     }
+//     return parsed;
+//   } catch (err) {
+//     throw err;
+//   }
+// }
+
+// /**
+//  * Simulator: POST token to indexer for demo mode
+//  */
+// export async function simulateLaunch(name, symbol, totalSupply = 1000000, realAsset = false, imageCid = "") {
 //   const fakeAddress = "0xSIM" + Math.random().toString(16).slice(2, 10);
-
 //   const payload = {
 //     tokenAddress: fakeAddress,
-//     owner: data.owner || "0xSIMOWNER",
-//     totalSupply: data.totalSupply,
-//     liquidityQIE: data.liquidityQIE,
-//     lockMonths: data.lockMonths,
-//     unlockTime: Math.floor(Date.now() / 1000) + data.lockMonths * 30 * 86400,
+//     name,
+//     symbol,
+//     totalSupply: Number(totalSupply) || 1000000,
+//     liquidityQIE: Math.floor(Math.random() * 900) + 100,
+//     lockMonths: 6,
+//     unlockTime: Math.floor(Date.now() / 1000) + 30 * 86400 * 6,
 //     trustScore: 2,
-//     imageCid: data.imageCid || ""
+//     owner: "0xSIMOWNER",
+//     imageCid
 //   };
 
 //   const res = await fetch(`${INDEXER_URL}/tokens`, {
@@ -20,180 +95,129 @@
 //     headers: { "Content-Type": "application/json" },
 //     body: JSON.stringify(payload)
 //   });
-
-//   if (!res.ok) throw new Error("Launch failed");
-
-//   return { ok: true, tokenAddress: fakeAddress };
+  
+//   if (!res.ok) {
+//     const txt = await res.text();
+//     throw new Error("Indexer rejected launch: " + txt);
+//   }
+//   return { tokenAddress: fakeAddress, ...payload };
 // }
 
+// /**
+//  * Unified helper the UI should call.
+//  * Tries on-chain first, falls back to simulation.
+//  */
+// export async function unifiedLaunch({ name, symbol, totalSupply, lockMonths, realAsset = false }) {
+//   // create local payload
+//   const payloadLocal = {
+//     name, 
+//     symbol, 
+//     totalSupply: Number(totalSupply) || 1000000,
+//     liquidityQIE: Math.floor(Math.random() * 900) + 100,
+//     lockMonths: Number(lockMonths) || 6,
+//     unlockTime: Math.floor(Date.now() / 1000) + (Number(lockMonths) || 6) * 30 * 86400,
+//     trustScore: 2
+//   };
 
-// frontend/src/services/launchService.jsx
-// frontend/src/services/launchService.jsx
-<<<<<<< HEAD
-// frontend/src/services/launchService.jsx
+//   // attempt on-chain
+//   try {
+//     const tokenAddress = "0x" + Math.random().toString(16).slice(2, 42);
+//     const result = await launchOnChain({
+//       tokenAddress,
+//       supply: payloadLocal.totalSupply,
+//       liquidity: payloadLocal.liquidityQIE,
+//       unlock: payloadLocal.unlockTime
+//     });
+
+//     // post result to indexer
+//     const postBody = {
+//       tokenAddress: result.tokenAddress || tokenAddress,
+//       ...payloadLocal,
+//       owner: result.owner || "0xCHAINOWNER",
+//       txHash: result.txHash || null
+//     };
+
+//     // POST to indexer
+//     const res = await fetch(`${INDEXER_URL}/tokens`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify(postBody)
+//     });
+
+//     if (!res.ok) {
+//       const txt = await res.text();
+//       console.warn("Indexer POST failed after on-chain success:", txt);
+//     }
+
+//     return postBody;
+//   } catch (err) {
+//     // fallback to simulate launch
+//     console.warn("On-chain launch failed, falling back to simulation:", err?.message || err);
+//     return await simulateLaunch(name, symbol, totalSupply, realAsset);
+//   }
+// }
 // launchService.jsx
-// launchService.jsx
-// launchService.jsx
-// launchService - handles real indexer POST and simulation fallback
-// launchService.jsx - tries on-chain -> indexer POST -> simulate
-// launchService.jsx (REAL ON-CHAIN LAUNCH + INDEXER SAVE + FALLBACK)
-// launchService.jsx
+
 import { ethers } from "ethers";
-import { INDEXER_URL, LAUNCHPAD_ADDRESS } from "../config";
-import ABI from "../abi/LaunchPadABI.json";
+import LaunchFactoryABI from "../abi/LaunchFactory.json";
+import { FACTORY_ADDRESS } from "../config";
 
-async function postToIndexer(payload) {
-  const res = await fetch(`${INDEXER_URL}/tokens`, {
-=======
-import { INDEXER_URL } from "../config";
+export async function launchToken(form) {
+  console.log("🚀 launchToken called");
+  console.log("📦 Raw form:", form);
 
-export async function simulateLaunch(name, symbol, totalSupply, realAsset = false, imageCid = "") {
-  let owner = "0xSIMOWNER";
-
-  try {
-    if (window.ethereum) {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      owner = accounts[0] || owner;
-    }
-  } catch (e) {
-    console.warn("Wallet not connected, using SIMOWNER");
+  if (!window.ethereum) {
+    throw new Error("Wallet not found");
   }
 
-  const payload = {
-    name,
-    symbol,
-    totalSupply: Number(totalSupply) || 1000000,
-    owner,
-    imageCid,
-    realAsset,
-    lockMonths: 6,
-    liquidityQIE: 0.1
-  };
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
 
-  const res = await fetch(`${INDEXER_URL}/sim-launch`, {
->>>>>>> 2dc515a (Updated Mad)
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+  console.log("👛 signer:", await signer.getAddress());
+  console.log("🏠 FACTORY_ADDRESS:", FACTORY_ADDRESS);
+
+  const factory = new ethers.Contract(
+    FACTORY_ADDRESS,
+    LaunchFactoryABI,
+    signer
+  );
+
+  // 🔢 STRICT parsing
+  const supply = BigInt(form.supply);
+  const lockMonths = BigInt(form.lockMonths);
+  const valueWei = ethers.parseEther(String(form.liquidityEth || "0"));
+
+  console.log("🔢 Parsed params:", {
+    name: form.name,
+    symbol: form.symbol,
+    supply: supply.toString(),
+    lockMonths: lockMonths.toString(),
+    valueWei: valueWei.toString()
   });
-<<<<<<< HEAD
-  return res.json();
-}
 
-export async function launchOnChain({
-  tokenAddress,
-  supply,
-  liquidity,
-  unlock
-}) {
-  try {
-    if (!window.qiewallet) {
-      throw new Error("QIE Wallet not detected");
+  // 🚨 THIS IS THE KEY FIX (function call, NOT sendTransaction)
+  const tx = await factory.launchToken(
+    form.name,
+    form.symbol,
+    supply,
+    lockMonths,
+    {
+      value: valueWei,
+      gasLimit: 3_000_000
     }
+  );
 
-    // correct provider for QIE Wallet
-    const provider = new ethers.BrowserProvider(window.qiewallet);
-    const signer = await provider.getSigner();
+  console.log("⏳ TX sent:", tx.hash);
+  console.log("✅ Transaction submitted. Hash:", tx.hash);
 
-    const contract = new ethers.Contract(
-      LAUNCHPAD_ADDRESS,
-      LAUNCHPAD_ABI,
-      signer
-    );
+// Do NOT wait for receipt (QIE Wallet bug)
+return {
+  hash: tx.hash,
+  explorer: `https://explorer.qie.digital/tx/${tx.hash}`
+};
 
-    const tx = await contract.emitTestLaunch(
-      tokenAddress,
-      supply,
-      liquidity,
-      unlock
-    );
+  console.log("✅ Token launched successfully");
 
-    console.log("⏳ Waiting for confirmation…");
-    const receipt = await tx.wait();
-
-    let launchEvent = null;
-
-    for (const log of receipt.logs) {
-      try {
-        const parsed = contract.interface.parseLog(log);
-        if (parsed.name === "Launched") {
-          launchEvent = parsed.args;
-          break;
-        }
-      } catch {}
-    }
-
-    if (!launchEvent) throw new Error("Launch event not found!");
-
-    return {
-      owner: launchEvent.owner,
-      tokenAddress: launchEvent.token,
-      supply: launchEvent.supply.toString(),
-      liquidity: launchEvent.liquidity.toString(),
-      unlock: launchEvent.unlock.toString(),
-    };
-  } catch (err) {
-    console.error("On-chain launch failed:", err);
-    throw err;
-  }
-}
-
-// Keep existing functions for backward compatibility
-export async function launchRealToken({ name, symbol, totalSupply, liquidityQIE, lockMonths }) {
-  let provider, signer, contract;
-
-  try {
-    provider = new ethers.BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-    contract = new ethers.Contract(LAUNCHPAD_ADDRESS, ABI, signer);
-  } catch (err) {
-    console.warn("Wallet unavailable:", err);
-    return { ok: false, error: "Wallet not connected" };
-  }
-
-  try {
-    // CALL THE REAL QIE CHAIN METHOD
-    const tx = await contract.launchToken(
-      name,
-      symbol,
-      BigInt(totalSupply),
-      BigInt(liquidityQIE),
-      BigInt(lockMonths)
-    );
-
-    const receipt = await tx.wait();
-
-    // Extract tokenAddress from logs
-    const evt = receipt.logs.find(l => l.topics[0] === ethers.id("Launched(address,address,uint256,uint256,uint256,uint256)"));
-
-    let parsed;
-    if (evt) parsed = contract.interface.parseLog(evt);
-
-    const tokenAddress = parsed?.args?.token;
-
-    const payload = {
-      tokenAddress,
-      name,
-      symbol,
-      totalSupply,
-      liquidityQIE,
-      lockMonths,
-      unlockTime: Math.floor(Date.now() / 1000) + lockMonths * 30 * 86400,
-      trustScore: 3,
-    };
-
-    await postToIndexer(payload);
-
-    return { ok: true, tokenAddress };
-
-  } catch (err) {
-    console.error("Real launch failed:", err);
-    return { ok: false, error: err.message };
-  }
-=======
-
-  if (!res.ok) throw new Error("Simulation launch failed");
-
-  return await res.json();
->>>>>>> 2dc515a (Updated Mad)
+  
+  return tx.hash;
 }

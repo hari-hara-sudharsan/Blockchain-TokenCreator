@@ -1,79 +1,42 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from "react";
-
-export default function NavBar({ onOpenLaunch }) {
-  const [account, setAccount] = useState(null);
-
-  useEffect(() => {
-    // Wallet injection stub — if QIE wallet injects provider, listen
-    if (window.ethereum?.request) {
-      window.ethereum.request({ method: "eth_accounts" }).then((acc = []) => {
-        if (acc && acc.length) setAccount(acc[0]);
-      }).catch(() => {});
-      // listen for connect
-      window.ethereum?.on?.("accountsChanged", (acc) => {
-        setAccount(acc?.[0] || null);
-      });
-    }
-  }, []);
-
-  async function connect() {
-    if (!window.ethereum?.request) {
-      alert("No wallet detected. Use QIE Wallet or MetaMask-like provider.");
-      return;
-    }
-    try {
-      const acc = await window.ethereum.request({ method: "eth_requestAccounts" });
-      setAccount(acc?.[0] || null);
-    } catch (e) { console.error(e); }
-  }
-
-  return (
-    <nav className="nav">
-      <div className="nav-left">
-        <div className="logo">SafeMint<span className="accent">™</span></div>
-        <div className="nav-links">
-          <a href="/">Launches</a>
-          <a href="#discover">Discover</a>
-          <a href="#analytics">Analytics</a>
-        </div>
-      </div>
-
-      <div className="nav-right">
-        <button className="btn" onClick={onOpenLaunch}>🚀 Launch Token</button>
-        <button className="btn outline" onClick={connect}>
-          {account ? `${account.slice(0,6)}...${account.slice(-4)}` : "Connect Wallet"}
-        </button>
-      </div>
-    </nav>
-  );
-}
-=======
-import { useNavigate } from "react-router-dom";
+import { useWallet } from "../context/WalletContext"
 
 export default function NavBar() {
-  const navigate = useNavigate();
+  const { account, connect } = useWallet()
 
   return (
-    <div className="w-full flex justify-between items-center px-6 py-4 bg-black/40 border-b border-cyan-500/10">
-      <h1 className="text-xl font-bold text-cyan-300">SafeMint</h1>
+    <nav className="w-full bg-[#fff5ed] border-b border-black/10">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        
+        {/* Logo */}
+        <div className="text-xl font-extrabold tracking-tight text-black">
+          SafeMint<span className="text-black/60">™</span>
+        </div>
 
-      <div className="flex gap-4">
+        {/* Links */}
+        <div className="hidden md:flex gap-8 text-sm font-medium text-black/70">
+          <a href="/" className="hover:text-black transition">
+            Launches
+          </a>
+          <a href="/validators" className="hover:text-black transition">
+            Validators
+          </a>
+          <a href="/governance" className="hover:text-black transition">
+            Governance
+          </a>
+        </div>
+
+        {/* Wallet Button */}
         <button
-          onClick={() => navigate("/launch")}
-          className="px-4 py-2 bg-cyan-500 text-black rounded-lg font-semibold"
+          onClick={connect}
+          className="px-5 py-2 rounded-full bg-black text-white text-sm font-semibold
+                     hover:bg-black/90 transition shadow-sm"
         >
-          Launch Token
+          {account
+            ? `${account.slice(0, 6)}...${account.slice(-4)}`
+            : "Connect Wallet"}
         </button>
 
-        <button
-          onClick={() => window.ethereum?.request({ method: "eth_requestAccounts" })}
-          className="px-4 py-2 bg-gray-700 text-cyan-300 rounded-lg"
-        >
-          Connect Wallet
-        </button>
       </div>
-    </div>
-  );
+    </nav>
+  )
 }
->>>>>>> 2dc515a (Updated Mad)

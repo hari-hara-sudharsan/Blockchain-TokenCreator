@@ -1,26 +1,22 @@
-// src/components/WalletConnect.jsx
-import { useEffect } from "react";
-import { useWallet } from "../hooks/useWallet";
+// src/components/WalletConnectButton.jsx
+// In any component (App.jsx, TokenCard.jsx, LaunchModal.jsx, etc.)
+import { useAccount, useDisconnect } from 'wagmi'
+import { modal } from '@/lib/walletConfig'
 
-export default function WalletConnect() {
-  const { account, connect } = useWallet();
-
-  useEffect(() => {
-    // no-op, hook sets up injection listeners
-  }, []);
+function WalletButton() {
+  const { address, isConnected } = useAccount()
+  const { disconnect } = useDisconnect()
 
   return (
     <div>
-      {account ? (
-        <div className="px-3 py-1 rounded-md bg-green-800/30">{account}</div>
+      {isConnected ? (
+        <>
+          <span>{address?.slice(0,6)}...{address?.slice(-4)}</span>
+          <button onClick={() => disconnect()}>Disconnect</button>
+        </>
       ) : (
-        <button
-          className="px-3 py-2 bg-cyan-500 rounded-md text-black font-semibold"
-          onClick={() => connect().catch((e) => alert("Wallet connect failed: " + e.message))}
-        >
-          Connect Wallet
-        </button>
+        <button onClick={() => modal.open()}>Connect Wallet</button>
       )}
     </div>
-  );
+  )
 }

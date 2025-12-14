@@ -6,8 +6,7 @@
       { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
       { "indexed": false, "internalType": "uint256", "name": "supply", "type": "uint256" },
       { "indexed": false, "internalType": "uint256", "name": "liquidity", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "months", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
+      { "indexed": false, "internalType": "uint256", "name": "unlock", "type": "uint256" }
     ],
     "name": "Launched",
     "type": "event"
@@ -17,7 +16,7 @@
       { "internalType": "address", "name": "token", "type": "address" },
       { "internalType": "uint256", "name": "supply", "type": "uint256" },
       { "internalType": "uint256", "name": "liquidity", "type": "uint256" },
-      { "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
+      { "internalType": "uint256", "name": "unlock", "type": "uint256" }
     ],
     "name": "emitTestLaunch",
     "outputs": [],
