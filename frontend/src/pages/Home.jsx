@@ -1,43 +1,31 @@
-import { useNavigate } from "react-router-dom"
-import NavBar from "../components/NavBar"
-
-const TOKENS = [
-  { name: "mad", symbol: "MAD", liquidity: 649, trust: "GREEN", address: "0x1" },
-  { name: "hari", symbol: "HAR", liquidity: 500, trust: "YELLOW", address: "0x2" },
-]
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { getAllTokens } from "../services/tokenService"
 
 export default function Home() {
-  const navigate = useNavigate()
+  const [tokens, setTokens] = useState([])
+
+  useEffect(() => {
+    setTokens(getAllTokens())
+  }, [])
 
   return (
-    <>
-      <NavBar />
+    <div className="page">
+      <h2>🚀 Launches</h2>
 
-      <div className="page">
-        <h2>Live Launches</h2>
-
-        <div className="token-grid">
-          {TOKENS.map((t) => (
-            <div
-              key={t.address}
-              className="token-card"
-              onClick={() => navigate(`/token/${t.address}`)}
-            >
+      <div className="token-row">
+        {tokens.map((t) => (
+          <Link key={t.address} to={`/token/${t.address}`}>
+            <div className="token-card">
               <h3>
-                {t.name} ({t.symbol})
+                {t.name} <span>{t.symbol}</span>
               </h3>
-
-              <p className="liquidity">
-                Liquidity: {t.liquidity}
-              </p>
-
-              <div className={`trust ${t.trust.toLowerCase()}`}>
-                TRUST: {t.trust}
-              </div>
+              <p>Liquidity: {t.liquidity}</p>
+              <span className="badge green">{t.trust}</span>
             </div>
-          ))}
-        </div>
+          </Link>
+        ))}
       </div>
-    </>
+    </div>
   )
 }

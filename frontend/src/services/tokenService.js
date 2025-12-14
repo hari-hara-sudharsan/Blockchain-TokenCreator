@@ -1,5 +1,7 @@
 export function getAllTokens() {
-  return [
+  const local = JSON.parse(localStorage.getItem("tokens") || "[]")
+
+  const demo = [
     {
       address: "0x123",
       name: "mad",
@@ -15,4 +17,6 @@ export function getAllTokens() {
       trust: "GREEN",
     },
   ]
+
+  return [...local, ...demo]
 }

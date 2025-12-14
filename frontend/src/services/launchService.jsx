@@ -158,44 +158,31 @@
 // }
 // launchService.jsx
 
-import { ethers } from "ethers";
-import LaunchFactoryABI from "../abi/LaunchFactory.json";
-import { FACTORY_ADDRESS } from "../config";
+import { ethers } from "ethers"
+import LaunchFactoryABI from "../abi/LaunchFactory.json"
+import { FACTORY_ADDRESS } from "../config"
 
 export async function launchToken(form) {
-  console.log("🚀 launchToken called");
-  console.log("📦 Raw form:", form);
+  console.log("🚀 launchToken called")
+  console.log("📦 Raw form:", form)
 
   if (!window.ethereum) {
-    throw new Error("Wallet not found");
+    throw new Error("Wallet not found")
   }
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-
-  console.log("👛 signer:", await signer.getAddress());
-  console.log("🏠 FACTORY_ADDRESS:", FACTORY_ADDRESS);
+  const provider = new ethers.BrowserProvider(window.ethereum)
+  const signer = await provider.getSigner()
 
   const factory = new ethers.Contract(
     FACTORY_ADDRESS,
     LaunchFactoryABI,
     signer
-  );
+  )
 
-  // 🔢 STRICT parsing
-  const supply = BigInt(form.supply);
-  const lockMonths = BigInt(form.lockMonths);
-  const valueWei = ethers.parseEther(String(form.liquidityEth || "0"));
+  const supply = BigInt(form.supply)
+  const lockMonths = BigInt(form.lockMonths)
+  const valueWei = ethers.parseEther(String(form.liquidityEth || "0"))
 
-  console.log("🔢 Parsed params:", {
-    name: form.name,
-    symbol: form.symbol,
-    supply: supply.toString(),
-    lockMonths: lockMonths.toString(),
-    valueWei: valueWei.toString()
-  });
-
-  // 🚨 THIS IS THE KEY FIX (function call, NOT sendTransaction)
   const tx = await factory.launchToken(
     form.name,
     form.symbol,
@@ -203,21 +190,23 @@ export async function launchToken(form) {
     lockMonths,
     {
       value: valueWei,
-      gasLimit: 3_000_000
+      gasLimit: 3_000_000,
     }
-  );
+  )
 
-  console.log("⏳ TX sent:", tx.hash);
-  console.log("✅ Transaction submitted. Hash:", tx.hash);
+  console.log("⏳ TX sent:", tx.hash)
 
-// Do NOT wait for receipt (QIE Wallet bug)
-return {
-  hash: tx.hash,
-  explorer: `https://explorer.qie.digital/tx/${tx.hash}`
-};
+  // ✅ ADD: persist token for frontend portfolio
+  const token = {
+    address: "0xSIM" + tx.hash.slice(2, 10), // simulated address
+    name: form.name,
+    symbol: form.symbol,
+    liquidity: Number(form.liquidityEth),
+    trust: "GREEN",
+  }
 
-  console.log("✅ Token launched successfully");
+  const existing = JSON.parse(localStorage.getItem("tokens") || "[]")
+  localStorage.setItem("tokens", JSON.stringify([token, ...existing]))
 
-  
-  return tx.hash;
+  return token.address
 }
