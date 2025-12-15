@@ -1,6 +1,6 @@
-# QIEDEX – Trust-First Token Creation & Liquidity Platform
+# SafeMint – Trust-First Token Creation & Liquidity Platform
 
-QIEDEX is a **free token creator and liquidity platform** built for the QIE blockchain that focuses on **killing scams, rug-pulls, and fake projects by design**with a real world impact.  
+SafeMint is a **free token creator and liquidity platform** built for the QIE blockchain that focuses on **killing scams, rug-pulls, and fake projects by design**with a real world impact.  
 Instead of letting anyone create dangerous tokens, QIEDEX enforces **fair launch, locked liquidity, and visible trust signals** from day one.
 
 This project is built for the **QIE Blockchain**.
@@ -93,7 +93,6 @@ Make sure you have:
 - npm
 - Git
 - Docker
-- Node
 
 
 
